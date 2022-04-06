@@ -1,0 +1,5 @@
+1.2.0: new Interface that conforms with Python naming conventions (e.g. applyMeshToolToWorkpiece -> apply_mesh_tool_to_workpiece)
+
+1.1.0: Class-based tool handling implemented
+
+1.0.0: Initial Release
