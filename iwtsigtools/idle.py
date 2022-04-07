@@ -95,7 +95,7 @@ def detect_idle(
         min_idle_len=1000, 
         idle_thresh=20, 
         seek_step=1,
-        use_rms=False
+        use_rms=True
     ):
     """Returns a list of all idle sections [start, end] as indices.
     Inverse of detect_nonidle()
