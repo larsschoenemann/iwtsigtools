@@ -5,7 +5,7 @@ Various tools to handle signal processing.
 0.1.0 (2022-04-06)
 
 ### Functions
--  
+- get_mesusoft_measurement Reads a IWT MesuSoft Measurement and saves it as a dataframe  
 
 ### Classes
 -  
