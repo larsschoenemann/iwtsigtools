@@ -29,6 +29,9 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 @date:    2022-04-06
 """
 import nptdms
+import tkinter as tk
+from tkinter import filedialog
+from pathlib import Path
 
 def _merge_two_dicts(x, y):
     """Given two dictionaries, merge them into a new dict as a shallow copy."""
@@ -94,3 +97,32 @@ def save_dataframe_to_tdms(filename, dataframe, metadata):
         for channel_object in channel_objects:
             tdms_writer.write_segment([
                 channel_object])
+
+def ui_get_file_path(config):
+    parent_dir = Path.cwd()
+
+    dir_name = Path(config.get('DEFAULT', 'base_dir', 
+                               fallback=parent_dir))
+    file_types = config.get('DEFAULT', 'file_types', 
+                            fallback=[('All files', '*.*')])
+    if type(file_types) is str:
+        file_types = file_types.split('|')
+        file_types = [tuple(ftype.split(',')) for ftype in file_types]
+    
+    if not dir_name.is_dir():
+        print(f'directory {dir_name} does not exist '
+              f'using {parent_dir} instead')
+        dir_name = parent_dir
+    
+    # hide root window -> we only want the file dialog
+    root = tk.Tk()
+    root.withdraw()
+
+    file_path = ''
+    try: 
+        file_path = filedialog.askopenfilename(
+            initialdir=dir_name.as_posix(), filetypes=file_types)
+    except Exception as e: 
+        print(e)
+    finally:
+        return file_path
