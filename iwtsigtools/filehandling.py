@@ -47,10 +47,13 @@ def load_mesusoft_measurement(file_name, print_info=False):
     """Load a measurement made in MesuSoft and saved as TDMS
 
     Args:
-        file_name (_type_): _description_
+        file_name (str): the name of the file to load
+        print_info (book): print additional information to the console
+                           (Default is False)
 
     Returns:
-        _type_: _description_
+        dataframe: measurement dataframe
+        dict: metadata
     """
     with nptdms.TdmsFile.open(file_name) as tdms_file:
         # read first group of file (should be "Measuring")
@@ -79,7 +82,21 @@ def load_mesusoft_measurement(file_name, print_info=False):
     }
     return measurement_df, metadata
 
-def save_dataframe_to_tdms(filename, dataframe, metadata):
+def save_dataframe_to_tdms(filename, dataframe, metadata=None):
+    """Save a dataframe to a TDMS file.
+    Intended for force measurements with measurment time as index.
+
+    Args:
+        filename (str): the file name
+        dataframe (pd.dataframe): the dataframe to save, 
+                                  Note: The index is always saved as an 
+                                  additional column 'Time'
+        metadata (dict): metadata to save, preferrably of the original TDMS
+    """
+    if metadata is None:
+        metadata = {'RootProperties': '',
+                    'GroupName': 'Measuring'}
+    
     root_object = nptdms.RootObject(properties=metadata['RootProperties'])
     group_object = nptdms.GroupObject(
         metadata['GroupName'], 
@@ -103,12 +120,19 @@ def save_dataframe_to_tdms(filename, dataframe, metadata):
                 channel_object])
 
 def ui_get_file_path(dir_name, file_types=[('All files', '*.*')]):
+    """Use graphical interfaces to select files and get the file path
+
+    Args:
+        dir_name (str): start directory name
+        file_types (list, optional): List of allowed file types. A file type
+                                     is a tuple of ('name', '.ext').
+                                     Defaults to [('All files', '*.*')].
+
+    Returns:
+        str: Path of the selected file. Empty string on cancel.
+    """
     parent_dir = Path.cwd()
 
-    if type(file_types) is str:
-        file_types = file_types.split('|')
-        file_types = [tuple(ftype.split(',')) for ftype in file_types]
-    
     if not dir_name.is_dir():
         print(f'directory {dir_name} does not exist '
               f'using {parent_dir} instead')

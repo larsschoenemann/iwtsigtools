@@ -36,20 +36,37 @@ def onselect(vmin, vmax):
     """handling of span_selection"""
     print(f'min =  {vmin}, max = {vmax}')
     print(f'span =  {vmax - vmin}')
-    
 
-def main():
-    """main function"""
+def read_config(config_name):
+    """Read an ini-based configuration
+
+    Args:
+        config_name (str): ini file name (in current working directory)
+
+    Returns:
+        dict: dictionary with config items
+    """
     config = ConfigParser()
-    config.read(Path.cwd().joinpath('iwtsigtools.ini'))
+    config.read(Path.cwd().joinpath(config_name))
     
-    dir_name = Path(config.get('DEFAULT', 'base_dir', 
+    dir_name = Path(config.get('DEFAULT', 'data_dir', 
                     fallback=Path.cwd()))
     file_types = config.get('DEFAULT', 'file_types', 
                             fallback=[('All files', '*.*')])
     
+    if type(file_types) is str:
+        file_types = file_types.split('|')
+        file_types = [tuple(ftype.split(',')) for ftype in file_types]
+    
+    return {'data_dir': dir_name, 'file_types': file_types}
+
+def main():
+    """main function"""
+    config = read_config('iwtsigtools.ini')
+    
     print('Please select file')
-    file_path = iwtsig.ui_get_file_path(dir_name, file_types=file_types)
+    file_path = iwtsig.ui_get_file_path(
+        config['data_dir'], file_types=config['file_types'])
 
     if not file_path:
         print('No file selected, exiting...')
@@ -110,6 +127,7 @@ def main():
             cutting_signals[i],
             metadata
         )
+
 
 if __name__ == '__main__':
     main()
