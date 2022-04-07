@@ -119,7 +119,7 @@ def save_dataframe_to_tdms(filename, dataframe, metadata=None):
             tdms_writer.write_segment([
                 channel_object])
 
-def ui_get_file_path(dir_name, file_types=[('All files', '*.*')]):
+def ui_get_file_path(dir_name, file_types=None):
     """Use graphical interfaces to select files and get the file path
 
     Args:
@@ -132,6 +132,9 @@ def ui_get_file_path(dir_name, file_types=[('All files', '*.*')]):
         str: Path of the selected file. Empty string on cancel.
     """
     parent_dir = Path.cwd()
+
+    if not file_types:
+        file_types = [('All files', '*.*')]
 
     if not dir_name.is_dir():
         print(f'directory {dir_name} does not exist '
@@ -146,7 +149,7 @@ def ui_get_file_path(dir_name, file_types=[('All files', '*.*')]):
     try: 
         file_path = filedialog.askopenfilename(
             initialdir=dir_name.as_posix(), filetypes=file_types)
-    except Exception as e: 
-        print(e)
-    finally:
-        return file_path
+    except Exception as this_exception: 
+        print(this_exception)
+
+    return file_path

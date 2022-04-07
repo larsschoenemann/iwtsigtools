@@ -22,15 +22,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 from pathlib import Path
+import tkinter as tk
+from configparser import ConfigParser
 
 import matplotlib  # pylint: disable=W0611
 import matplotlib.pyplot as plt
 from matplotlib.widgets import SpanSelector
-from configparser import ConfigParser, NoOptionError
 import numpy as np
 import pandas as pd
 import iwtsigtools as iwtsig
-import tkinter as tk
 
 def onselect(vmin, vmax):
     """handling of span_selection"""
@@ -54,7 +54,7 @@ def read_config(config_name):
     file_types = config.get('DEFAULT', 'file_types', 
                             fallback=[('All files', '*.*')])
     
-    if type(file_types) is str:
+    if isinstance(file_types, str):
         file_types = file_types.split('|')
         file_types = [tuple(ftype.split(',')) for ftype in file_types]
     
@@ -62,8 +62,11 @@ def read_config(config_name):
 
 def main():
     """main function"""
+    # An ini-based configuration is used here, mainly to provide two strings
+    # data_dir (str) and file_types (list of string tuples [(str, str)])
     config = read_config('iwtsigtools.ini')
     
+    # Convenience function to open a file via the GUI
     print('Please select file')
     file_path = iwtsig.ui_get_file_path(
         config['data_dir'], file_types=config['file_types'])
@@ -72,15 +75,19 @@ def main():
         print('No file selected, exiting...')
         return
 
+    # load the measurement data and metadata
     measurement_df, metadata = iwtsig.load_mesusoft_measurement(
         Path(file_path))
     print(metadata)
 
-    fc_df = np.sqrt(measurement_df['Fx']**2 
-                  + measurement_df['Fy']**2 
-                  + measurement_df['Fz']**2)
+    # Calculate resulting force F_res = sqrt(Fx^2+Fy^2+Fz^2)
+    # Assumption: first three columns contain force values for x,y,z
+    f_res_df = np.sqrt(measurement_df[measurement_df.columns[0]]**2 
+                     + measurement_df[measurement_df.columns[1]]**2 
+                     + measurement_df[measurement_df.columns[2]]**2)
 
-    axis = fc_df.plot()
+    # plot f_res for selection of idle thresholds
+    axis = f_res_df.plot()
     span = SpanSelector(
         axis,
         onselect,
@@ -95,39 +102,46 @@ def main():
     if span._selection_completed:  #pylint: disable=W0212
         my_threshold = span.extents[1] - span.extents[0]
 
+    # detect nonidle segments, seek step is based on actual sampling rate
+    sampling_rate = metadata['GroupProperties']['SamplingRate']
     ranges = iwtsig.detect_nonidle(
-        fc_df, 
-        min_idle_len=1000, 
-        seek_step=1000, idle_thresh=my_threshold)
+        f_res_df, 
+        min_idle_len=int(np.ceil(sampling_rate*0.025)), 
+        seek_step=int(np.ceil(sampling_rate*0.025)), 
+        idle_thresh=my_threshold)
+    
+    # split signals at detected ranges
     cutting_signals = iwtsig.split_on_ranges(
         measurement_df, ranges, keep_idle=0)
-    _, axes = plt.subplots(len(measurement_df.columns), 1, sharex=True)
     
-    # plotting
+    # plot split signals in common plot
+    _, axes = plt.subplots(
+        len(measurement_df.columns), 1, sharex=True, sharey=True)
     for sig in cutting_signals:
         for axis, component in zip(axes, sig):
             axis.plot(sig[component])
     plt.show(block=True)
     
-    # export
+    # get line numbers from file name (optional, start at 1 on fail)
     line_numbers = pd.Series(Path(file_path).stem).str.extractall(
         r'n(\d+)').astype(int).to_numpy().flatten()
-    num_el = line_numbers[1] - line_numbers[0] + 1
+    start_num = 0
+    if len(line_numbers) > 1:
+        if line_numbers[1] - line_numbers[0] + 1 != len(cutting_signals):
+            print('Something went wrong, unclear number of segments')
+            return
+    if len(line_numbers) > 0:
+        start_num = line_numbers[0]
     
-    if num_el != len(cutting_signals):
-        print('Something went wrong, unclear number of segments')
-        return
-    
+    # export to individual TDMS files
     export_dir = Path(tk.filedialog.askdirectory())
     for i, cutting_signal in enumerate(cutting_signals):
-        # i = 0
         iwtsig.save_dataframe_to_tdms(Path(export_dir).joinpath(
-                (f'{Path(file_path).stem[:-9]}_n{i+line_numbers[0]:03d}'
+                (f'{Path(file_path).stem[:-9]}_n{i+start_num:03d}'
                  f'{Path(file_path).suffix}')),
-            cutting_signals[i],
+            cutting_signal,
             metadata
         )
-
 
 if __name__ == '__main__':
     main()
