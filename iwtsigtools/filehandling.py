@@ -4,19 +4,23 @@ Functions for signal import.
 
 Copyright (C) 2022  Lars Schönemann
 
-This library is free software; you can redistribute it and/or modify 
-it under the terms of the GNU Lesser General Public License as published by 
-the Free Software Foundation; either version 2.1 of the License, or 
-(at your option) any later version.
+Permission is hereby granted, free of charge, to any person obtaining a copy 
+of this software and associated documentation files (the "Software"), to deal 
+in the Software without restriction, including without limitation the rights 
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell 
+copies of the Software, and to permit persons to whom the Software is 
+furnished to do so, subject to the following conditions:
 
-This library is distributed in the hope that it will be useful, 
-but WITHOUT ANY WARRANTY; without even the implied warranty of 
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
-GNU Lesser General Public License for more details.
+The above copyright notice and this permission notice shall be included in all 
+copies or substantial portions of the Software.
 
-You should have received a copy of the GNU Lesser General Public License 
-along with this library; if not, write to the Free Software Foundation, Inc., 
-51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
+SOFTWARE.
 
 @author: Dr.-Ing. Lars Schönemann
 @contact: schoenemann@iwt.uni-bremen.de
@@ -98,13 +102,9 @@ def save_dataframe_to_tdms(filename, dataframe, metadata):
             tdms_writer.write_segment([
                 channel_object])
 
-def ui_get_file_path(config):
+def ui_get_file_path(dir_name, file_types=[('All files', '*.*')]):
     parent_dir = Path.cwd()
 
-    dir_name = Path(config.get('DEFAULT', 'base_dir', 
-                               fallback=parent_dir))
-    file_types = config.get('DEFAULT', 'file_types', 
-                            fallback=[('All files', '*.*')])
     if type(file_types) is str:
         file_types = file_types.split('|')
         file_types = [tuple(ftype.split(',')) for ftype in file_types]
