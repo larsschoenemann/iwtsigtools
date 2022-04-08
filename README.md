@@ -4,10 +4,6 @@ Various tools to handle signal processing. Mainly developed to handle
 measurements made using IWT MesuSoft, but should be applicable to arbitrary
 signals as well.
 
-## Current Version
-
-0.1.0b (2022-04-07)
-
 ## Functions
 
 ### File handling

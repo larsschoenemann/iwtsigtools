@@ -3,6 +3,7 @@
 Functions for signal normalization.
 
 Copyright (C) 2022  Lars Schönemann
+Leibniz Institut für Werkstofforientierte Technologien IWT, Bremen, Germany
 
 Permission is hereby granted, free of charge, to any person obtaining a copy 
 of this software and associated documentation files (the "Software"), to deal 
@@ -21,16 +22,6 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
 SOFTWARE.
-
-@author: Dr.-Ing. Lars Schönemann
-@contact: schoenemann@iwt.uni-bremen.de
-@address: LFM Laboratory for Precision Machining
-          Leibniz-Institut für Werkstofforientierte Technologien IWT
-          Badgasteiner Straße 2
-          28359 Bremen
-          Germany
-@version: 0.1
-@date:    2022-04-06
 """
 import logging
 

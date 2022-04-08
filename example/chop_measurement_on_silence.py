@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
-"""Exemplary use of iwtsigtools.
+"""
+Exemplary use of iwtsigtools.
 
 Copyright (C) 2022  Lars Schönemann
+Leibniz Institut für Werkstofforientierte Technologien IWT, Bremen, Germany
 
 Permission is hereby granted, free of charge, to any person obtaining a copy 
 of this software and associated documentation files (the "Software"), to deal 

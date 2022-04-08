@@ -133,3 +133,4 @@ dmypy.json
 
 .stats
 /*.stats
+/iwtsigtools/_version.py
