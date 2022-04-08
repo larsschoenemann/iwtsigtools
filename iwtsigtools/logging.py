@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Functions for signal normalization.
+Logging functions.
+
+Code taken from the pydub package (https://github.com/jiaaro/pydub) and 
+modified for handling dataframes/signals.
+Originally licensed under the MIT license.
 
 Copyright (C) 2022  Lars Schönemann
 
@@ -34,15 +38,27 @@ SOFTWARE.
 """
 import logging
 
-log = logging.getLogger(__package__)
 
-def normalize(f):
-    """return signal normalized to min/max"""
-    maxf = max(f)
-    minf = min(f)
-    return ((f - maxf) + (f - minf)) / (maxf - minf)  # return normalized sig.
+def start_logger(loglevel=logging.INFO):
+    """Start a custom logger.
 
-def normalize_to_interval(f, interval=(-500, 500)):
-    """return signal normalized to given interval"""
-    return \
-        ((f - interval[1]) + (f - interval[0])) / (interval[1] - interval[0])
+    Args:
+        loglevel (loggin.LOGLEVEL, optional): Logging level.
+            Defaults to logging.INFO.
+
+    Returns:
+        RootLogger: The logger.
+    """
+    newlog = logging.getLogger(__package__)
+    if not newlog.handlers:
+        formatter = logging.Formatter(
+            "%(asctime)s: [%(levelname)s] %(message)s")
+        chandler = logging.StreamHandler()
+        chandler.setLevel(logging.DEBUG)
+        chandler.setFormatter(formatter)
+        newlog.addHandler(chandler)
+    newlog.setLevel(loglevel)
+    return newlog
+
+def get_logger():
+    return logging.getLogger(__package__)

@@ -32,25 +32,22 @@ SOFTWARE.
 @version: 0.1
 @date:    2022-04-06
 """
-import nptdms
+import logging
 import tkinter as tk
-from tkinter import filedialog
 from pathlib import Path
+from tkinter import filedialog
 
-def _merge_two_dicts(x, y):
-    """Given two dictionaries, merge them into a new dict as a shallow copy."""
-    z = x.copy()
-    z.update(y)
-    return z
+import nptdms
+import pandas as pd
 
-def load_mesusoft_measurement(file_name, print_info=False):
+log = logging.getLogger(__package__)
+
+def load_mesusoft_measurement(file_name):
     """Load a measurement made in MesuSoft and saved as TDMS
 
     Args:
         file_name (str): the name of the file to load
-        print_info (book): print additional information to the console
-                           (Default is False)
-
+        
     Returns:
         dataframe: measurement dataframe
         dict: metadata
@@ -63,18 +60,16 @@ def load_mesusoft_measurement(file_name, print_info=False):
         group = tdms_file[group_name]
         
         # read channels as pandas dataframe
-        if print_info:
-            print('This group has the following channels:')
-            print(group.channels())
+        log.info(
+            f'Group {group_name} has the following channels: '
+            f'{group.channels()}')
         
         measurement_df = group.as_dataframe()
         # set index to first columns (should be "Time")
         measurement_df.set_index(measurement_df.columns[0], inplace=True)
 
-        if print_info:
-            print(f'read to dataframe with columns {measurement_df.columns}')
+        log.info(f'Read to dataframe with columns {measurement_df.columns}')
         
-    # measurement_df.plot(subplots=True)
     metadata = {
         'RootProperties': tdms_file.properties,
         'GroupName': group_name,
@@ -119,8 +114,8 @@ def save_dataframe_to_tdms(filename, dataframe, metadata=None):
             tdms_writer.write_segment([
                 channel_object])
 
-def ui_get_file_path(dir_name, file_types=None):
-    """Use graphical interfaces to select files and get the file path
+def ui_get_file_name(dir_name, **kwargs):
+    """Use graphical interfaces to select files and get the file path.
 
     Args:
         dir_name (str): start directory name
@@ -132,24 +127,82 @@ def ui_get_file_path(dir_name, file_types=None):
         str: Path of the selected file. Empty string on cancel.
     """
     parent_dir = Path.cwd()
+    
+    file_types = kwargs.get('file_types', None)
+    select_multiple_files = kwargs.get('multiple', False)
 
     if not file_types:
         file_types = [('All files', '*.*')]
 
+    if isinstance(dir_name, str):
+        dir_name = Path(dir_name)
+    
     if not dir_name.is_dir():
-        print(f'directory {dir_name} does not exist '
-              f'using {parent_dir} instead')
+        log.warning(
+            f'directory {dir_name} does not exist '
+            f'using {parent_dir} instead')
         dir_name = parent_dir
     
-    # hide root window -> we only want the file dialog
     root = tk.Tk()
-    root.withdraw()
+    # hide root window -> we only want the file dialog
+    root.withdraw() 
+    # bring file dialog to top
+    root.call('wm', 'attributes', '.', '-topmost', True)
 
-    file_path = ''
+    file_name = ''
     try: 
-        file_path = filedialog.askopenfilename(
-            initialdir=dir_name.as_posix(), filetypes=file_types)
-    except Exception as this_exception: 
-        print(this_exception)
+        file_name = filedialog.askopenfilename(
+            initialdir=dir_name.as_posix(), 
+            filetypes=file_types, 
+            multiple=select_multiple_files)
+    except Exception as open_filename_exception: 
+        log.error(open_filename_exception)
 
-    return file_path
+    return file_name
+
+def export_chunks(file_name, metadata, cutting_signals, start_num=0):
+    """Export signals to individual TDMS files
+
+    Args:
+        file_path (str): The file's name.
+        metadata (dict): Dictionary of metadata to use for TDMS export.
+        cutting_signals (list of dataframes): The signals to export.
+        start_num (int, optional): Start export numbering at start_num + 1. 
+                                   Defaults to 0. (i.e. start at 1)
+    """
+    log.info('Starting export.')
+    for i, cutting_signal in enumerate(cutting_signals):
+        save_dataframe_to_tdms(Path(file_name).parent.joinpath(
+                (f'{Path(file_name).stem}_{i+start_num:03d}'
+                 f'{Path(file_name).suffix}')),
+            cutting_signal,
+            metadata
+        )
+    log.info(f'Finished exporting {len(cutting_signals)} files.')
+
+def get_start_from_filename(file_name, num_elements, identifier='n'):
+    """Get line numbers from file name. (optional, start at 1 on fail)
+
+    Args:
+        file_name (str): The file's  name.
+        num_elements (int): Number of elements to check against
+        identifier (str, optional): Identifier to extract numbering.
+                                    Expects digits follwing the string. 
+                                    Defaults to 'n'.
+
+    Returns:
+        int: starting line number
+    """
+    # 
+    start_num = 0
+    line_numbers = pd.Series(Path(file_name).stem).str.extractall(
+        f'{identifier}' r'(\d+)').astype(int).to_numpy().flatten()
+    if len(line_numbers) > 1:
+        if line_numbers[1] - line_numbers[0] + 1 != num_elements:
+            log.warning('Something went wrong, unclear number of segments. '
+                        'Check output files!!!')
+            # return
+    if len(line_numbers) > 0:
+        start_num = line_numbers[0]
+    log.info(f'Start index is {start_num}')
+    return start_num

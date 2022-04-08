@@ -37,7 +37,11 @@ SOFTWARE.
 @date:    2022-04-06
 """
 import itertools
+import logging
+
 import numpy as np
+
+log = logging.getLogger(__package__)
 
 def _get_idle_ranges(min_idle_len, seek_step, idle_starts):
     # combine the silence we detected into ranges (start index - end index)
